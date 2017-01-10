@@ -217,6 +217,14 @@ sub main
     {
         if (!$installedGames->{$patchGame})
         {
+            if (!$allowAll)
+            {
+                say "$patchGame: does not appear to be installed";
+            }
+            next;
+        }
+        if (!$patches->{$patchGame})
+        {
             say "$patchGame: has no patches";
             next;
         }
