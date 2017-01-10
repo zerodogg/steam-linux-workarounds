@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 use 5.020;
+use Getopt::Long;
 use File::Basename qw(basename dirname);
 use JSON;
 use Cwd qw(realpath);
@@ -77,7 +78,8 @@ sub executePatch
     if (-e './patches/'.$patch.'.sh')
     {
         $| = 1;
-        print "Applying patch to $patch...";
+        print $mode eq 'reverse' ? 'Reversing ' : 'Applying ';
+        print "patch to $patch...";
         my $patchScript = realpath('./patches/'.$patch.'.sh');
         my $shlib = realpath('./helpers/shlib.sh');
         my $action = 'performPatch';
@@ -94,6 +96,76 @@ sub executePatch
     }
 }
 
+# Purpose: Print formatted --help output
+# Usage: printHelp('-shortoption', '--longoption', 'description');
+#  Description will be reformatted to fit within a normal terminal
+sub printHelp
+{
+    # The short option
+    my $short = shift,
+    # The long option
+    my $long = shift;
+    # The description
+    my $desc = shift;
+    # The generated description that will be printed in the end
+    my $GeneratedDesc;
+    # The current line of the description
+    my $currdesc = '';
+    # The maximum length any line can be
+    my $maxlen = 80;
+    # The length the options take up
+    my $optionlen = 23;
+    # Check if the short/long are LONGER than optionlen, if so, we need
+    # to do some additional magic to take up only $maxlen.
+    # The +1 here is because we always add a space between them, no matter what
+    if ((length($short) + length($long) + 1) > $optionlen)
+    {
+        $optionlen = length($short) + length($long) + 1;
+    }
+    # Split the description into lines
+    foreach my $part (split(' ',$desc))
+    {
+        if(defined $GeneratedDesc)
+        {
+            if ((length($currdesc) + length($part) + 1 + 24) > $maxlen)
+            {
+                $GeneratedDesc .= "\n";
+                $currdesc = '';
+            }
+            else
+            {
+                $currdesc .= ' ';
+                $GeneratedDesc .= ' ';
+            }
+        }
+        $currdesc .= $part;
+        $GeneratedDesc .= $part;
+    }
+    # Something went wrong
+    pDie('Option mismatch') if not $GeneratedDesc;
+    # Print it all
+    foreach my $description (split(/\n/,$GeneratedDesc))
+    {
+        printf "%-4s %-22s %s\n", $short,$long,$description;
+        # Set short and long to '' to ensure we don't print the options twice
+        $short = '';$long = '';
+    }
+    # Succeed
+    return 1;
+}
+
+# Purpose: Output usage information
+sub usage
+{
+    say "USAGE: apply-patches OPTIONS? game1, game2 ..";
+    say "";
+    printHelp('','--all','Apply all patches if requested');
+    printHelp('','--undo','Undo a patch instead of applying it');
+    printHelp('','--help','Print this help information');
+    printHelp('','--list','List all installed games that have patches');
+    exit(shift);
+}
+
 # Purpose: Main entry point
 sub main
 {
@@ -102,13 +174,62 @@ sub main
     {
         die('Failed to locate patches');
     }
+
+    my $action = 'patch';
+    my $allowAll = 0;
+
+    Getopt::Long::Configure('no_ignore_case','bundling');
+    GetOptions(
+        'help' => sub {
+            usage(0);
+        },
+        'undo' => sub {
+            $action = 'reverse';
+        },
+        'list' => sub {
+            $action = 'list';
+            $allowAll = 1;
+        },
+        'all' => sub
+        {
+            $allowAll = 1;
+        },
+    );
+
     my $installedGames = listInstalledGames();
     my $patches = loadPatchMetadata();
-    foreach my $patchGame (keys %{$patches})
+
+    my @performOnGames = @ARGV;
+    if (!@performOnGames || $action eq 'list')
     {
+        if (!$allowAll)
+        {
+            usage(0);
+        }
+        @performOnGames = keys %{$patches};
+    }
+
+    if ($action eq 'list')
+    {
+        say 'Installed games with available patches:';
+    }
+    foreach my $patchGame (@performOnGames)
+    {
+        if (!$installedGames->{$patchGame})
+        {
+            say "$patchGame: has no patches";
+            next;
+        }
         if ($installedGames->{$patchGame})
         {
-            executePatch($patches->{$patchGame}->{basename},$installedGames->{$patchGame});
+            if ($action eq 'list')
+            {
+                say $patchGame;
+            }
+            else
+            {
+                executePatch($patches->{$patchGame}->{basename},$installedGames->{$patchGame},$action);
+            }
         }
     }
 }

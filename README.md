@@ -16,9 +16,21 @@ if reversing the changes fails.
 
 ## Usage
 
-Run `./apply-patches` to patch all games that it can find. In time it will
-support applying individual fixes, and undoing the changes. Right now it's a
-one-way apply-all.
+**Apply all patches**
+
+Run `./apply-patches --all` to apply all available patches
+
+**Undo all patches**
+
+Run `./apply-patches --all --undo` to undo all patches
+
+**Apply a single patch**
+
+Run `./apply-patches GAME` to apply a patch to a single game
+
+**Additional options**
+
+Run `./apply-patches --help` to list all command-line parameters.
 
 ## Adding new patches
 
