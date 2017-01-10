@@ -31,11 +31,33 @@ sub slurp
     return $content;
 }
 
+# Purpose: Retrieve a list of all steam library directories
+sub getSteamLibraries
+{
+    my @dirs = ($ENV{HOME}.'/.steam/steam');
+    if (! -e $ENV{HOME}.'/.steam/root/config/config.vdf')
+    {
+        warn('Failed to locate the Steam config, falling back to hardcoded paths only');
+        return @dirs;
+    }
+    my $config = slurp($ENV{HOME}.'/.steam/root/config/config.vdf');
+    foreach my $line (split(/\n/,$config))
+    {
+        if($line =~ s/\s*\"BaseInstallFolder(_\d+)?\"\s*//)
+        {
+            $line =~ s/^\"//;
+            $line =~ s/\"$//;
+            chomp($line);
+            push(@dirs,$line);
+        }
+    }
+    return @dirs;
+}
+
 # Purpose: Retrieve a list of all installed games
-# FIXME: Does not support listing games not in the main library.
 sub listInstalledGames
 {
-    my @steamPaths = ($ENV{HOME}.'/.steam/steam/');
+    my @steamPaths = getSteamLibraries();
     my %games;
     foreach my $dir (@steamPaths)
     {
