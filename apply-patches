@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+# A part of steam-linux-workarounds
+# Copyright (C) Eskild Hustvedt 2016
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+use 5.020;
+use File::Basename qw(basename dirname);
+use JSON;
+use Cwd qw(realpath);
+
+# Purpose: Read an entire file into a scalar
+sub slurp
+{
+    my $file = shift;
+    local $/ = undef;
+    open(my $i,'<',$file);
+    my $content = <$i>;
+    close($i);
+    return $content;
+}
+
+# Purpose: Retrieve a list of all installed games
+# FIXME: Does not support listing games not in the main library.
+sub listInstalledGames
+{
+    my @steamPaths = ($ENV{HOME}.'/.steam/steam/');
+    my %games;
+    foreach my $dir (@steamPaths)
+    {
+        foreach my $entry (glob($dir.'/steamapps/common/*'))
+        {
+            if (-d $entry)
+            {
+                $games{ basename($entry) } = $entry;
+            }
+        }
+    }
+    return \%games;
+}
+
+# Purpose: Load all patch metadata and return it in a hash
+sub loadPatchMetadata
+{
+    my %patches;
+    foreach my $patch (glob('./patches/*.json'))
+    {
+        my $fileBase = basename($patch);
+        $fileBase =~ s/\.json$//;
+        my $data = decode_json(slurp($patch));
+        $patches{ $data->{directoryName} } = {
+            meta => $data,
+            basename => $fileBase,
+        };
+    }
+    return \%patches;
+}
+
+# Purpose: Execute a single patch
+sub executePatch
+{
+    my $patch = shift;
+    my $patchRoot = shift;
+    my $mode = shift;
+    $mode //= 'patch';
+    my $prevDir = realpath('.');
+    if (-e './patches/'.$patch.'.sh')
+    {
+        $| = 1;
+        print "Applying patch to $patch...";
+        my $patchScript = realpath('./patches/'.$patch.'.sh');
+        my $shlib = realpath('./helpers/shlib.sh');
+        my $action = 'performPatch';
+        if ($mode eq 'reverse')
+        {
+            $action = 'undoPatch';
+        }
+        system('bash','-c','cd "$1";source "$2"; source "$3";'.$action,'patch-runner-sh',$patchRoot,$shlib,$patchScript);
+        print "done\n";
+    }
+    else
+    {
+        die('Failed to locate script for '.$patch."\n");
+    }
+}
+
+# Purpose: Main entry point
+sub main
+{
+    chdir( dirname(realpath($0)) );
+    if ( ! -e './patches')
+    {
+        die('Failed to locate patches');
+    }
+    my $installedGames = listInstalledGames();
+    my $patches = loadPatchMetadata();
+    foreach my $patchGame (keys %{$patches})
+    {
+        if ($installedGames->{$patchGame})
+        {
+            executePatch($patches->{$patchGame}->{basename},$installedGames->{$patchGame});
+        }
+    }
+}
+
+main();
