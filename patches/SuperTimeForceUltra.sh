@@ -1,6 +1,6 @@
 #!/bin/bash
 # A part of steam-linux-workarounds
-# Copyright (C) Eskild Hustvedt 2016
+# Copyright (C) Eskild Hustvedt 2017
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
