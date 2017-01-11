@@ -23,7 +23,9 @@ must have one function named `performPatch` and one function named `undoPatch`.
 As their names indicate, these are used to apply a patch and undo an applied
 patch. It must be possible to execute them multiple times (ie. undoPatch must
 succeed even if the patch is not applied, and performPatch must succeed even if
-the patch has already been applied).
+the patch has already been applied). The functions must `return 0` on success.
+On failure you may `return` nonzero, or `exit` nonzero (you are also encouraged
+to reverse any changes already made, but not required).
 
 `apply-patches` makes several guarantees about the execution environment:
 

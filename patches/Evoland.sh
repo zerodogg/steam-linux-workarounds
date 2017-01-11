@@ -30,6 +30,7 @@ function performPatch ()
 }
 EOF
     fi
+    return 0
 }
 function undoPatch ()
 {
@@ -37,4 +38,5 @@ function undoPatch ()
     if [ -e "config.js.bak" ]; then
         mv config.js.bak config.js
     fi
+    return 0
 }

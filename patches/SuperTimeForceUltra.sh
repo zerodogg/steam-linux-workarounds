@@ -20,9 +20,11 @@ function performPatch ()
     # The problem is that STFU doesn't work with the steam runtime
     launchScriptWorkaround "STFU.bin.x86_64" "no-steam-runtime"
     launchScriptWorkaround "STFU.bin.x86" "no-steam-runtime"
+    return 0
 }
 function undoPatch ()
 {
     launchScriptWorkaround_undo "STFU.bin.x86_64"
     launchScriptWorkaround_undo "STFU.bin.x86"
+    return 0
 }

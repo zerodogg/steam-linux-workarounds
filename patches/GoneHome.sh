@@ -21,9 +21,11 @@ function performPatch ()
     # as a decimal separator
     launchScriptWorkaround "GoneHome.x86_64" "locale"
     launchScriptWorkaround "GoneHome.x86" "locale"
+    return 0
 }
 function undoPatch ()
 {
     launchScriptWorkaround_undo "GoneHome.x86_64"
     launchScriptWorkaround_undo "GoneHome.x86"
+    return 0
 }
