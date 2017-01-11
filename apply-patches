@@ -34,13 +34,14 @@ sub slurp
 # Purpose: Retrieve a list of all steam library directories
 sub getSteamLibraries
 {
-    my @dirs = ($ENV{HOME}.'/.steam/steam');
-    if (! -e $ENV{HOME}.'/.steam/root/config/config.vdf')
+    my @dirs = (resolveInsensitivePath($ENV{HOME}.'/.steam/steam'));
+    my $configPath = resolveInsensitivePath($ENV{HOME}.'/.steam/root/config/config.vdf');
+    if (!$configPath)
     {
         warn('Failed to locate the Steam config, falling back to hardcoded paths only');
         return @dirs;
     }
-    my $config = slurp($ENV{HOME}.'/.steam/root/config/config.vdf');
+    my $config = slurp($configPath);
     foreach my $line (split(/\n/,$config))
     {
         if($line =~ s/\s*\"BaseInstallFolder(_\d+)?\"\s*//)
@@ -61,7 +62,8 @@ sub listInstalledGames
     my %games;
     foreach my $dir (@steamPaths)
     {
-        foreach my $entry (glob($dir.'/steamapps/common/*'))
+        my $path = resolveInsensitivePath($dir.'/steamapps/common');
+        foreach my $entry (glob($path.'/*'))
         {
             if (-d $entry)
             {
@@ -116,6 +118,59 @@ sub executePatch
     {
         die('Failed to locate script for '.$patch."\n");
     }
+}
+
+# Purpose: Case-insensitively resolve a path
+# Usage: path = resolveInsensitivePath(path)
+sub resolveInsensitivePath
+{
+    my $path = shift;
+    my $resolved = '/';
+    # Loop through each component of the path
+    foreach my $component (split(/\//,$path))
+    {
+        # Ignore empty components (first entry, in case of multiple /-es etc.)
+        next if $component eq '';
+        # If resolved is not a directory any more, the path is invalid
+        if (! -d $resolved)
+        {
+            return;
+        }
+        # A matched entry that is sensitive (preferred if it exists)
+        my $sensitiveMatch;
+        # A matched entry that is insensitive
+        my $insensitiveMatch;
+        # Read all entries in the directory
+        opendir(my $dh,$resolved);
+        while(readdir $dh)
+        {
+            # If $_ matches $component, then we use this match
+            if ($_ eq $component)
+            {
+                $sensitiveMatch = $_;
+                last;
+            }
+            # If a lowercased version of $_ matches a lowercased version of $component, then
+            # this is a insensitive match for this part of the path
+            if(lc($_) eq lc($component))
+            {
+                $insensitiveMatch = $_;
+            }
+        }
+        closedir($dh);
+        # If we have a match, store it
+        if (defined $sensitiveMatch || defined $insensitiveMatch)
+        {
+            $resolved .= ($sensitiveMatch // $insensitiveMatch) .'/';
+        }
+        # If we have no matches for this component then the path is invalid
+        else
+        {
+            return;
+        }
+    }
+    # Return the resolved path
+    return $resolved;
 }
 
 # Purpose: Print formatted --help output
