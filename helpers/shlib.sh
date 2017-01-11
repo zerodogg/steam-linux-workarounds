@@ -47,5 +47,6 @@ function launchScriptWorkaround ()
 
 function launchScriptWorkaround_undo
 {
+    FILE="$1";shift
     [ -e "$FILE.real" ] && mv "$FILE.real" "$FILE"
 }
