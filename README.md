@@ -34,4 +34,4 @@ Run `./apply-patches --help` to list all command-line parameters.
 
 ## Adding new patches
 
-See CONTRIBUTING.md
+See [CONTRIBUTING.md](CONTRIBUTING.md)
