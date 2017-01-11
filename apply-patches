@@ -111,7 +111,7 @@ sub executePatch
         {
             $action = 'undoPatch';
         }
-        system('bash','-c','cd "$1";source "$2"; source "$3";'.$action,'patch-runner-sh',$patchRoot,$shlib,$patchScript);
+        system('bash','-c','cd "$1" && source "$2" && source "$3" && '.$action,'patch-runner-sh',$patchRoot,$shlib,$patchScript);
         print "done\n";
     }
     else
