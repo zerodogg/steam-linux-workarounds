@@ -34,7 +34,4 @@ Run `./apply-patches --help` to list all command-line parameters.
 
 ## Adding new patches
 
-For now, documentation is poor (read: non-existing). See the existing scripts
-in ./patches for how to add additional ones. Pull requests are most welcome.
-You are encouraged to also report the problem to the developers, so that the
-issue might get a proper fix.
+See CONTRIBUTING.md
