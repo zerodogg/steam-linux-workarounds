@@ -25,9 +25,9 @@ sub slurp
 {
     my $file = shift;
     local $/ = undef;
-    open(my $i,'<',$file);
+    open(my $i,'<',$file) or die('Failed to open '.$file.' for reading: '.$!."\n");
     my $content = <$i>;
-    close($i);
+    close($i) or warn('Failed to close filehandle for '.$file.': '.$!."\n");
     return $content;
 }
 
@@ -141,7 +141,7 @@ sub resolveInsensitivePath
         # A matched entry that is insensitive
         my $insensitiveMatch;
         # Read all entries in the directory
-        opendir(my $dh,$resolved);
+        opendir(my $dh,$resolved) or die('Failed to opendir '.$resolved.': '.$!."\n");
         while(readdir $dh)
         {
             # If $_ matches $component, then we use this match
@@ -157,7 +157,7 @@ sub resolveInsensitivePath
                 $insensitiveMatch = $_;
             }
         }
-        closedir($dh);
+        closedir($dh) or warn('Failed to close dirhandle for '.$resolved.': '.$!."\n");
         # If we have a match, store it
         if (defined $sensitiveMatch || defined $insensitiveMatch)
         {
