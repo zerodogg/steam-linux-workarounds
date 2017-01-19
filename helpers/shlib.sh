@@ -21,28 +21,41 @@ function launchScriptWorkaround ()
 {
     FILE="$1";shift
 
-    if [ ! -e "$FILE.real" ]; then
-        mv "$FILE" "$FILE.real"
-    fi
-
-    echo '#!/bin/bash' > "$FILE"
-
+    SCRIPT=""
     for fix in "$@";do
         case "$fix" in
             locale)
-                    echo "export LC_ALL=\"\"" >> "$FILE"
+                    SCRIPT="$SCRIPT""export LC_ALL=\"\"\n"
                 ;;
             no-steam-runtime)
-                    echo "export LD_LIBRARY_PATH=\"\"" >> "$FILE"
+                    SCRIPT="$SCRIPT""export LD_LIBRARY_PATH=\"\"\n"
                     ;;
             *)
                     echo "WARNING: UNKNOWN FIX: $fix"
                 ;;
         esac
     done
+    launchScriptWorkaround_manual "$FILE" "$SCRIPT"
+}
 
+function launchScriptWorkaround_manual ()
+{
+    FILE="$1";shift
+    SCRIPT="$1";shift
+
+    if [ ! -e "$FILE.real" ] && [ ! -e "$FILE" ]; then
+        echo "Unable to create wrapper script for $FILE: original does not exist"
+        return 1
+    fi
+    if [ ! -e "$FILE.real" ]; then
+        mv "$FILE" "$FILE.real"
+    fi
+
+    echo "#!/bin/bash" > "$FILE"
+    echo -e "$SCRIPT" >> "$FILE"
     echo "exec \"./$FILE.real\" \"\$@\"" >> "$FILE"
     chmod +x "$FILE"
+
 }
 
 function launchScriptWorkaround_undo
