@@ -23,6 +23,13 @@
         <td>No</td>
     </tr>
     <tr>
+        <td>Civilization VI</td>
+        <td>Doesn't run with the Steam Runtime</td>
+        <td>No</td>
+        <td>No</td>
+        <td>No</td>
+    </tr>
+    <tr>
         <td>Gone Home</td>
         <td>Does not use locale-aware decimal parsing, breaking the game with
         locales using decimal separators other than ".". Fixed by setting
