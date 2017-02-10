@@ -28,7 +28,33 @@ function launchScriptWorkaround ()
                     SCRIPT="$SCRIPT""export LC_ALL=\"\"\n"
                 ;;
             no-steam-runtime)
-                    SCRIPT="$SCRIPT""export LD_LIBRARY_PATH=\"\"\n"
+                    read -r -d '' runtimeFix << EOF
+# Remove steam-runtime from the games LD_LIBRARY_PATH
+_runtimeFilter=""
+oldIFS="\$IFS"
+IFS=:
+for component in \$LD_LIBRARY_PATH; do
+    if ! echo "\$component"|grep -q steam-runtime; then
+        _runtimeFilter="\$_runtimeFilter\$component:"
+    fi
+done
+# Add workaround libraries if they are present on the system (ie. Arch)
+if [ -d /usr/lib/steam ] || [ -d /usr/lib32/steam ]; then
+    _runtimeFilter="\$_runtimeFilter/usr/lib/steam:/usr/lib32/steam"
+fi
+export LD_LIBRARY_PATH="\$_runtimeFilter"
+_runtimeFilter=""
+# Remove non-overlay preloads (added by the runtime)
+for component in \$LD_PRELOAD;do
+    if echo "\$component" |grep -q gameoverlay; then
+        _runtimeFilter="\$_runtimeFilter\$component:"
+    fi
+done
+export LD_PRELOAD="\$_runtimeFilter"
+
+IFS=\$oldIFS
+EOF
+                    SCRIPT="$SCRIPT$runtimeFix"
                     ;;
             *)
                     echo "WARNING: UNKNOWN FIX: $fix"
