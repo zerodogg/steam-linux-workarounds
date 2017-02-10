@@ -16,6 +16,13 @@
         <td>No</td>
     </tr>
     <tr>
+        <td>Civilization: Beyond Earth</td>
+        <td>Needs additional LD_PRELOADS to run</td>
+        <td>No</td>
+        <td>No</td>
+        <td>No</td>
+    </tr>
+    <tr>
         <td>Gone Home</td>
         <td>Does not use locale-aware decimal parsing, breaking the game with
         locales using decimal separators other than ".". Fixed by setting
